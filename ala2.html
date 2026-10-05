@@ -1,0 +1,2435 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Threat Lab - Malware Simulator</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #02050d;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* ================= RGB ================= */
+
+        @keyframes rgbBorder {
+            0% {
+                filter: hue-rotate(0deg)
+            }
+
+            50% {
+                filter: hue-rotate(180deg)
+            }
+
+            100% {
+                filter: hue-rotate(360deg)
+            }
+        }
+
+        @keyframes rgbText {
+            0% {
+                background-position: 0% 50%
+            }
+
+            50% {
+                background-position: 100% 50%
+            }
+
+            100% {
+                background-position: 0% 50%
+            }
+        }
+
+        @keyframes pulseGlow {
+
+            0%,
+            100% {
+                box-shadow:
+                    0 0 8px rgba(0, 255, 255, .25),
+                    0 0 18px rgba(255, 0, 255, .15);
+            }
+
+            50% {
+                box-shadow:
+                    0 0 18px rgba(0, 255, 255, .65),
+                    0 0 35px rgba(255, 0, 255, .35);
+            }
+        }
+
+        @keyframes screenScan {
+            0% {
+                top: -10%
+            }
+
+            100% {
+                top: 110%
+            }
+        }
+
+        @keyframes pcFloat {
+
+            0%,
+            100% {
+                transform: translateY(0)
+            }
+
+            50% {
+                transform: translateY(-3px)
+            }
+        }
+
+        @keyframes infectedPulse {
+            0% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+
+            50% {
+                transform: scale(1.08);
+                filter: brightness(1.8);
+            }
+
+            100% {
+                transform: scale(1);
+                filter: brightness(1);
+            }
+        }
+
+        @keyframes cableFlow {
+            to {
+                stroke-dashoffset: -30
+            }
+        }
+
+        @keyframes packetGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 6px #00ffff, 0 0 15px #00ffff;
+            }
+
+            50% {
+                box-shadow: 0 0 15px #fff, 0 0 30px #00ffff;
+            }
+        }
+
+        /* ================= BODY BACKGROUND ================= */
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 15% 20%, rgba(0, 255, 255, .08), transparent 25%),
+                radial-gradient(circle at 85% 70%, rgba(255, 0, 255, .08), transparent 25%);
+            z-index: -2;
+        }
+
+        .gridBG {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: .15;
+            background-image:
+                linear-gradient(rgba(0, 255, 255, .15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, .15) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+        }
+
+        /* ================= MADE BY ================= */
+
+        .madeBy {
+            position: relative;
+            width: max-content;
+            margin: 14px auto;
+            padding: 8px 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            isolation: isolate;
+        }
+
+        .madeBy::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            padding: 2px;
+            border-radius: 12px;
+            background: conic-gradient(#ff0000,
+                    #ffff00,
+                    #00ff00,
+                    #00ffff,
+                    #0066ff,
+                    #ff00ff,
+                    #ff0000);
+            animation: rgbBorder 3s linear infinite;
+            -webkit-mask:
+                linear-gradient(#000 0 0) content-box,
+                linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+
+        .madeBy span {
+            position: relative;
+            z-index: 2;
+            font-size: 15px;
+            font-weight: bold;
+            background: linear-gradient(90deg,
+                    red,
+                    orange,
+                    yellow,
+                    lime,
+                    cyan,
+                    blue,
+                    magenta,
+                    red);
+            background-size: 400% 100%;
+            -webkit-background-clip: text;
+            color: transparent;
+            animation: rgbText 4s linear infinite;
+        }
+
+        /* ================= HOME ================= */
+
+        .page {
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        #homePage {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .logo {
+            font-size: clamp(30px, 6vw, 65px);
+            font-weight: 900;
+            letter-spacing: 4px;
+            text-align: center;
+            background: linear-gradient(90deg,
+                    #ff003c,
+                    #00ffff,
+                    #7c00ff,
+                    #ff00c8,
+                    #00ff88);
+            background-size: 400% 100%;
+            -webkit-background-clip: text;
+            color: transparent;
+            animation: rgbText 5s linear infinite;
+            text-shadow: 0 0 25px rgba(0, 255, 255, .2);
+        }
+
+        .subtitle {
+            margin-top: 8px;
+            color: #8da5c7;
+            letter-spacing: 3px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .warning {
+            margin-top: 22px;
+            padding: 9px 16px;
+            border: 1px solid #00eaff;
+            border-radius: 20px;
+            color: #00eaff;
+            font-size: 12px;
+            background: rgba(0, 255, 255, .04);
+            animation: pulseGlow 2s infinite;
+        }
+
+        /* ================= THREAT BUTTONS ================= */
+
+        .threatButtons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 35px;
+        }
+
+        .threatButton {
+            position: relative;
+            width: 220px;
+            min-height: 130px;
+            border: none;
+            border-radius: 20px;
+            overflow: hidden;
+            cursor: pointer;
+            color: white;
+            background: #080d18;
+            border: 2px solid transparent;
+            isolation: isolate;
+            transition: .3s;
+        }
+
+        .threatButton::before {
+            content: "";
+            position: absolute;
+            inset: -3px;
+            background: linear-gradient(90deg,
+                    red,
+                    orange,
+                    yellow,
+                    lime,
+                    cyan,
+                    blue,
+                    magenta,
+                    red);
+            background-size: 400% 100%;
+            animation: rgbText 2.5s linear infinite;
+            z-index: -2;
+        }
+
+        .threatButton::after {
+            content: "";
+            position: absolute;
+            inset: 3px;
+            background: #080d18;
+            border-radius: 17px;
+            z-index: -1;
+        }
+
+        .threatButton:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow:
+                0 0 20px rgba(0, 255, 255, .35),
+                0 0 40px rgba(255, 0, 255, .25);
+        }
+
+        .threatIcon {
+            display: block;
+            font-size: 45px;
+            margin-bottom: 10px;
+        }
+
+        .threatName {
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .threatDesc {
+            margin-top: 6px;
+            font-size: 11px;
+            color: #9bb0ca;
+        }
+
+        /* ================= SIMULATOR ================= */
+
+        #simulatorPage {
+            display: none;
+            min-height: 100vh;
+            padding: 8px 12px 20px;
+        }
+
+        .simHeader {
+            width: 100%;
+            max-width: 1400px;
+            margin: auto;
+            text-align: center;
+        }
+
+        .simTitle {
+            font-size: clamp(20px, 4vw, 35px);
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+
+        .selectedThreat {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            border: 1px solid #00eaff;
+            color: #00eaff;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .controlBtn {
+            border: 1px solid #00eaff;
+            background: #07101d;
+            color: #fff;
+            border-radius: 8px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: .2s;
+        }
+
+        .controlBtn:hover {
+            background: #00eaff;
+            color: #001018;
+        }
+
+        /* ================= STATS ================= */
+
+        .stats {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto 10px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .stat {
+            background: #07101b;
+            border: 1px solid #173d62;
+            border-radius: 10px;
+            padding: 8px;
+            text-align: center;
+            min-height: 58px;
+        }
+
+        .statLabel {
+            color: #7690ae;
+            font-size: 9px;
+            text-transform: uppercase;
+        }
+
+        .statValue {
+            margin-top: 3px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #00f0ff;
+        }
+
+        /* ================= NETWORK ================= */
+
+        .networkBox {
+            width: 100%;
+            max-width: 1400px;
+            margin: auto;
+            border: 1px solid #1b4265;
+            border-radius: 15px;
+            background: rgba(4, 10, 20, .92);
+            padding: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                0 0 15px rgba(0, 255, 255, .06),
+                inset 0 0 30px rgba(0, 255, 255, .02);
+        }
+
+        .networkTitle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 8px 9px;
+        }
+
+        .networkTitle h2 {
+            font-size: 15px;
+            letter-spacing: 1px;
+        }
+
+        .networkHint {
+            color: #00eaff;
+            font-size: 10px;
+            text-align: right;
+        }
+
+        /* Canvas fits screen */
+
+        .networkCanvas {
+            position: relative;
+            width: 100%;
+            height: clamp(330px, 50vh, 500px);
+            min-height: 330px;
+            overflow: hidden;
+            border-radius: 12px;
+            background:
+                radial-gradient(circle at center, rgba(0, 255, 255, .045), transparent 60%),
+                rgba(0, 0, 0, .18);
+        }
+
+        /* SVG cables */
+
+        #cableLayer {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .cable {
+            stroke: #123554;
+            stroke-width: 2;
+            fill: none;
+            opacity: .7;
+        }
+
+        .cableGlow {
+            stroke: #00d9ff;
+            stroke-width: 2;
+            stroke-dasharray: 8 10;
+            fill: none;
+            opacity: .12;
+        }
+
+        .cable.active {
+            stroke: #00ffff;
+            stroke-width: 4;
+            opacity: 1;
+            filter: drop-shadow(0 0 6px #00ffff);
+            animation: cableFlow .4s linear infinite;
+        }
+
+        /* ================= PC GRID ================= */
+
+        .pcGrid {
+            position: absolute;
+            inset: 15px;
+            z-index: 3;
+
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 14px;
+        }
+
+        /* ================= REAL PC VISUAL ================= */
+
+        .pc {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: default;
+            user-select: none;
+            animation: pcFloat 3s ease-in-out infinite;
+        }
+
+        .pc:nth-child(2) {
+            animation-delay: .15s
+        }
+
+        .pc:nth-child(3) {
+            animation-delay: .3s
+        }
+
+        .pc:nth-child(4) {
+            animation-delay: .45s
+        }
+
+        .pc:nth-child(5) {
+            animation-delay: .6s
+        }
+
+        .pc:nth-child(6) {
+            animation-delay: .75s
+        }
+
+        .pc:nth-child(7) {
+            animation-delay: .9s
+        }
+
+        .pc:nth-child(8) {
+            animation-delay: 1.05s
+        }
+
+        .pc:nth-child(9) {
+            animation-delay: 1.2s
+        }
+
+        .pc:nth-child(10) {
+            animation-delay: 1.35s
+        }
+
+        .pc:nth-child(11) {
+            animation-delay: 1.5s
+        }
+
+        .pc:nth-child(12) {
+            animation-delay: 1.65s
+        }
+
+        /* Monitor */
+
+        .monitor {
+            position: relative;
+            width: min(105px, 75%);
+            aspect-ratio: 1.25/1;
+            border: 3px solid #4b6078;
+            border-radius: 9px;
+            background: #050a11;
+            box-shadow:
+                0 0 0 2px #111b27,
+                0 7px 0 -2px #25384d,
+                0 10px 0 -2px #0d1722;
+            transition: .4s;
+            overflow: visible;
+        }
+
+        /* Screen */
+
+        .screen {
+            position: absolute;
+            inset: 7px;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(circle, #073449 0%, #03121e 70%);
+            border: 1px solid #174e69;
+        }
+
+        /* screen scan */
+
+        .screen::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            top: -10%;
+            background: #00ffff;
+            opacity: .25;
+            box-shadow: 0 0 8px #00ffff;
+            animation: screenScan 3s linear infinite;
+        }
+
+        .pcLogo {
+            font-size: 29px;
+            filter: drop-shadow(0 0 7px #00cfff);
+            opacity: .9;
+            z-index: 2;
+        }
+
+        .pcNumber {
+            position: absolute;
+            bottom: 2px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8px;
+            color: #8ea8c2;
+            z-index: 3;
+        }
+
+        .pcBase {
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 42px;
+            height: 7px;
+            background: #26384b;
+            border-radius: 0 0 5px 5px;
+        }
+
+        .pcStand {
+            position: absolute;
+            bottom: -7px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 7px;
+            background: #33495f;
+        }
+
+        /* ================= PC STATES ================= */
+
+        .pc.infected .monitor {
+            border-color: #ff174f;
+            box-shadow:
+                0 0 12px rgba(255, 0, 60, .9),
+                0 0 30px rgba(255, 0, 60, .45),
+                0 7px 0 -2px #61152a;
+            animation: infectedPulse .8s infinite;
+        }
+
+        .pc.infected .screen {
+            background:
+                radial-gradient(circle, #4c0717, #13030a 75%);
+            border-color: #ff174f;
+        }
+
+        .pc.infected .pcLogo {
+            filter: drop-shadow(0 0 10px red);
+        }
+
+        .pc.infected .pcNumber {
+            color: #ff426d;
+        }
+
+        .pc.host .monitor {
+            border-color: #ffd000;
+            box-shadow:
+                0 0 12px rgba(255, 210, 0, .9),
+                0 0 30px rgba(255, 180, 0, .3);
+        }
+
+        .pc.host .screen {
+            background:
+                radial-gradient(circle, #413508, #120f03 75%);
+            border-color: #ffd000;
+        }
+
+        .pc.target .monitor {
+            border-color: #ff00ff;
+            box-shadow:
+                0 0 12px #ff00ff,
+                0 0 35px rgba(255, 0, 255, .4);
+        }
+
+        /* Infection rings */
+
+        .pc.infected::before {
+            content: "";
+            position: absolute;
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 0, 70, .7);
+            animation: infectRing 1.2s ease-out infinite;
+        }
+
+        @keyframes infectRing {
+            0% {
+                transform: scale(.7);
+                opacity: .9
+            }
+
+            100% {
+                transform: scale(1.6);
+                opacity: 0
+            }
+        }
+
+        /* status */
+
+        .pcStatus {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px;
+            white-space: nowrap;
+            color: #5e7895;
+        }
+
+        .pc.infected .pcStatus {
+            color: #ff315d;
+            font-weight: bold;
+        }
+
+        .pc.host .pcStatus {
+            color: #ffd000;
+            font-weight: bold;
+        }
+
+        .pc.target .pcStatus {
+            color: #ff00ff;
+            font-weight: bold;
+        }
+
+        /* ================= PACKET ================= */
+
+        .networkPacket {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #00ffff;
+            z-index: 100;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            box-shadow:
+                0 0 7px #fff,
+                0 0 15px #00ffff,
+                0 0 30px #00ffff;
+            animation: packetGlow .4s infinite;
+        }
+
+        .networkPacket::after {
+            content: "";
+            position: absolute;
+            inset: -8px;
+            border: 1px solid rgba(0, 255, 255, .5);
+            border-radius: 50%;
+        }
+
+        /* ================= LOG ================= */
+
+        .logBox {
+            width: 100%;
+            max-width: 1400px;
+            margin: 10px auto;
+            border: 1px solid #1b4265;
+            border-radius: 12px;
+            background: #040a12;
+            padding: 9px;
+        }
+
+        .logTitle {
+            font-size: 12px;
+            color: #00eaff;
+            margin-bottom: 5px;
+        }
+
+        .activityLog {
+            height: 75px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 9px;
+            line-height: 1.6;
+            color: #7fa1bf;
+        }
+
+        .logLine {
+            padding-left: 4px;
+        }
+
+        .logLine.good {
+            color: #00ff9d;
+        }
+
+        .logLine.warn {
+            color: #ffd000;
+        }
+
+        .logLine.danger {
+            color: #ff456c;
+        }
+
+        /* ================= INFO ================= */
+
+        .infoGrid {
+            width: 100%;
+            max-width: 1400px;
+            margin: 10px auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .infoCard {
+            background: #07101b;
+            border: 1px solid #214765;
+            border-radius: 10px;
+            padding: 10px;
+            min-height: 100px;
+        }
+
+        .infoCard h3 {
+            color: #00eaff;
+            font-size: 11px;
+            margin-bottom: 6px;
+        }
+
+        .infoCard p {
+            color: #8da4bd;
+            font-size: 9px;
+            line-height: 1.55;
+        }
+
+        /* ================= FAKE APP ================= */
+
+        .fakeApp {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(0, 0, 0, .7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .fakeWindow {
+            width: min(360px, 90%);
+            background: #080d17;
+            border: 2px solid #ff00ff;
+            border-radius: 14px;
+            padding: 25px;
+            text-align: center;
+            box-shadow:
+                0 0 20px #ff00ff,
+                0 0 60px rgba(255, 0, 255, .3);
+        }
+
+        .fakeIcon {
+            font-size: 50px;
+        }
+
+        .fakeWindow h2 {
+            margin: 10px 0;
+            color: #ff00ff;
+        }
+
+        .fakeWindow p {
+            font-size: 11px;
+            color: #9baec3;
+        }
+
+        .progressBar {
+            margin-top: 15px;
+            height: 7px;
+            border-radius: 10px;
+            background: #172131;
+            overflow: hidden;
+        }
+
+        .progress {
+            width: 0;
+            height: 100%;
+            background: linear-gradient(90deg,
+                    red,
+                    magenta,
+                    cyan);
+            animation: progress 1.5s linear forwards;
+        }
+
+        @keyframes progress {
+            to {
+                width: 100%
+            }
+        }
+
+        /* ================= MOBILE ================= */
+
+        @media(max-width:900px) {
+            .pcGrid {
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(4, 1fr);
+                gap: 10px;
+            }
+
+            .stats {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .infoGrid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .monitor {
+                width: min(85px, 80%);
+            }
+        }
+
+        @media(max-width:600px) {
+            #simulatorPage {
+                padding: 5px;
+            }
+
+            .networkCanvas {
+                height: 350px;
+            }
+
+            .pcGrid {
+                inset: 12px;
+                grid-template-columns: repeat(3, 1fr);
+                grid-template-rows: repeat(4, 1fr);
+                gap: 8px;
+            }
+
+            .monitor {
+                width: 62px;
+                border-width: 2px;
+            }
+
+            .screen {
+                inset: 4px;
+            }
+
+            .pcLogo {
+                font-size: 20px;
+            }
+
+            .pcBase {
+                width: 28px;
+            }
+
+            .pcStatus {
+                bottom: -17px;
+                font-size: 6px;
+            }
+
+            .pcNumber {
+                font-size: 6px;
+            }
+
+            .stats {
+                gap: 4px;
+            }
+
+            .stat {
+                padding: 5px 2px;
+            }
+
+            .statValue {
+                font-size: 14px;
+            }
+
+            .statLabel {
+                font-size: 7px;
+            }
+
+            .infoGrid {
+                grid-template-columns: 1fr;
+            }
+
+            .infoCard {
+                min-height: auto;
+            }
+
+            .networkHint {
+                font-size: 8px;
+            }
+
+            .logo {
+                letter-spacing: 2px;
+            }
+        }
+
+        @media(max-width:380px) {
+            .networkCanvas {
+                height: 320px;
+            }
+
+            .pcGrid {
+                inset: 8px;
+                gap: 5px;
+            }
+
+            .monitor {
+                width: 53px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="gridBG"></div>
+
+    <!-- ================= HOME ================= -->
+
+    <section id="homePage" class="page">
+
+        <div class="madeBy">
+            <span>Made By:- Nishit Joshi</span>
+        </div>
+
+        <div class="logo">CYBER THREAT LAB</div>
+
+        <div class="subtitle">
+            VIRUS • WORM • TROJAN SIMULATION
+        </div>
+
+        <div class="warning">
+            ⚠ SAFE EDUCATIONAL SIMULATION — NO REAL MALWARE
+        </div>
+
+        <div class="threatButtons">
+
+            <button class="threatButton" onclick="startThreat('Virus')">
+                <span class="threatIcon">🦠</span>
+                <span class="threatName">VIRUS</span>
+                <div class="threatDesc">
+                    Host-based visual spread
+                </div>
+            </button>
+
+            <button class="threatButton" onclick="startThreat('Worm')">
+                <span class="threatIcon">🪱</span>
+                <span class="threatName">WORM</span>
+                <div class="threatDesc">
+                    LAN cable random spread
+                </div>
+            </button>
+
+            <button class="threatButton" onclick="startThreat('Trojan')">
+                <span class="threatIcon">🐴</span>
+                <span class="threatName">TROJAN</span>
+                <div class="threatDesc">
+                    Single target simulation
+                </div>
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================= SIMULATOR ================= -->
+
+    <section id="simulatorPage" class="page">
+
+        <div class="simHeader">
+
+            <div class="madeBy">
+                <span>Made By:- Nishit Joshi</span>
+            </div>
+
+            <div class="simTitle">
+                🛡 CYBER THREAT SIMULATOR
+            </div>
+
+            <div class="selectedThreat" id="selectedThreat">
+                THREAT
+            </div>
+
+            <div class="controls">
+                <button class="controlBtn" onclick="backHome()">
+                    ← Change Threat
+                </button>
+
+                <button class="controlBtn" onclick="restart()">
+                    ↻ Restart
+                </button>
+            </div>
+
+        </div>
+
+
+        <!-- ================= STATS ================= -->
+
+        <div class="stats">
+
+            <div class="stat">
+                <div class="statLabel">Threat</div>
+                <div class="statValue" id="statThreat">-</div>
+            </div>
+
+            <div class="stat">
+                <div class="statLabel">Infected PCs</div>
+                <div class="statValue" id="statInfected">0</div>
+            </div>
+
+            <div class="stat">
+                <div class="statLabel">Events</div>
+                <div class="statValue" id="statEvents">0</div>
+            </div>
+
+            <div class="stat">
+                <div class="statLabel">Status</div>
+                <div class="statValue" id="statStatus">READY</div>
+            </div>
+
+        </div>
+
+
+        <!-- ================= NETWORK ================= -->
+
+        <div class="networkBox">
+
+            <div class="networkTitle">
+
+                <h2>
+                    🖥️ 12 PC NETWORK
+                </h2>
+
+                <div class="networkHint" id="networkHint">
+                    Starting simulation...
+                </div>
+
+            </div>
+
+            <div class="networkCanvas" id="networkCanvas">
+
+                <svg id="cableLayer">
+                    <defs>
+                        <filter id="cableGlowFilter">
+                            <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
+                            <feMerge>
+                                <feMergeNode in="coloredBlur" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                    </defs>
+                </svg>
+
+                <div class="pcGrid" id="pcGrid"></div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= LOG ================= -->
+
+        <div class="logBox">
+
+            <div class="logTitle">
+                📡 LIVE SIMULATION ACTIVITY
+            </div>
+
+            <div class="activityLog" id="activityLog"></div>
+
+        </div>
+
+
+        <!-- ================= INFORMATION ================= -->
+
+        <div class="infoGrid">
+
+            <div class="infoCard">
+                <h3>🦠 THREAT</h3>
+                <p id="infoThreat">
+                    Select a threat to start the educational simulation.
+                </p>
+            </div>
+
+            <div class="infoCard">
+                <h3>⚙ PROPERTIES</h3>
+                <p id="infoProperties">
+                    Visual-only malware behaviour demonstration.
+                </p>
+            </div>
+
+            <div class="infoCard">
+                <h3>🔄 WORKING / FLOW</h3>
+                <p id="infoWorking">
+                    The simulation automatically starts with a random PC.
+                </p>
+            </div>
+
+            <div class="infoCard">
+                <h3>🛡 SOLUTION</h3>
+                <p id="infoSolution">
+                    Use updated security software, strong security controls
+                    and safe browsing practices.
+                </p>
+            </div>
+
+            <div class="infoCard">
+                <h3>📚 DETAILED INFORMATION</h3>
+                <p id="infoDetails">
+                    This simulation does not access real files, networks,
+                    processes or operating-system resources.
+                </p>
+            </div>
+
+            <div class="infoCard">
+                <h3>🔐 SECURITY RECOMMENDATION</h3>
+                <p id="infoSecurity">
+                    Keep systems updated and never execute unknown software.
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="madeBy">
+            <span>Made By:- Nishit Joshi</span>
+        </div>
+
+    </section>
+
+
+    <script>
+
+        /* =========================================================
+        GLOBAL VARIABLES
+        ========================================================= */
+
+        const TOTAL_PCS = 12;
+
+        let currentThreat = "";
+        let infected = new Set();
+        let hostId = null;
+        let targetId = null;
+
+        let events = 0;
+        let timers = [];
+        let simulationToken = 0;
+        let simulationStarted = false;
+
+
+        /* =========================================================
+        THREAT INFORMATION
+        ========================================================= */
+
+        const threatData = {
+
+            Virus: {
+                properties:
+                    "A virus is represented as a host-origin based threat. One PC acts as the HOST and the remaining PCs are visually infected.",
+
+                working:
+                    "A random HOST PC is automatically selected. The visual virus payload then moves from PC to PC until the remaining 11 PCs are infected.",
+
+                solution:
+                    "Use updated antivirus software, scan files before opening them and avoid unknown attachments.",
+
+                details:
+                    "In this safe simulation, 12 PCs are displayed. One random PC remains marked HOST and is not counted as infected. The other 11 PCs receive the visual infection.",
+
+                security:
+                    "Use endpoint protection, application controls, regular backups and user awareness."
+            },
+
+            Worm: {
+                properties:
+                    "A worm can spread automatically between connected systems without requiring manual selection.",
+
+                working:
+                    "All 12 PCs are connected using simulated LAN cables. A random starting PC is selected automatically and the worm travels through cable routes in random order.",
+
+                solution:
+                    "Segment networks, monitor traffic, patch systems and restrict unnecessary network access.",
+
+                details:
+                    "The cable network is only a visual representation. Random target PCs are selected and a glowing packet travels through the simulated cable path.",
+
+                security:
+                    "Use network segmentation, firewalls, IDS/IPS and timely security updates."
+            },
+
+            Trojan: {
+                properties:
+                    "A Trojan is represented as a malicious program disguised as a legitimate application.",
+
+                working:
+                    "One random PC is automatically selected as the target. A fake application execution animation is shown and only that PC becomes infected.",
+
+                solution:
+                    "Download applications only from trusted sources and verify software before installation.",
+
+                details:
+                    "The Trojan simulation infects exactly one randomly selected PC. No real application, file or operating-system process is modified.",
+
+                security:
+                    "Use application allowlisting, endpoint security and user awareness."
+            }
+
+        };
+
+
+        /* =========================================================
+        START THREAT
+        ========================================================= */
+
+        function startThreat(threat) {
+
+            currentThreat = threat;
+
+            document.getElementById("homePage").style.display = "none";
+            document.getElementById("simulatorPage").style.display = "block";
+
+            document.getElementById("selectedThreat").textContent =
+                threat.toUpperCase();
+
+            document.getElementById("statThreat").textContent =
+                threat;
+
+            updateInformation();
+
+            createPCs();
+
+            /*
+            Automatically start after a short delay.
+            No PC click required.
+            */
+
+            const token = simulationToken;
+
+            setTimeout(() => {
+
+                if (token !== simulationToken) return;
+
+                startAutomaticSimulation();
+
+            }, 700);
+        }
+
+
+        /* =========================================================
+        CREATE 12 PCS
+        ========================================================= */
+
+        function createPCs() {
+
+            const grid = document.getElementById("pcGrid");
+
+            grid.innerHTML = "";
+
+            for (let i = 0; i < TOTAL_PCS; i++) {
+
+                const pc = document.createElement("div");
+
+                pc.className = "pc";
+
+                pc.id = `pc-${i}`;
+
+                pc.innerHTML = `
+
+<div class="monitor">
+
+<div class="screen">
+
+<div class="pcLogo">
+🖥️
+</div>
+
+<div class="pcNumber">
+PC-${String(i + 1).padStart(2, "0")}
+</div>
+
+</div>
+
+<div class="pcStand"></div>
+<div class="pcBase"></div>
+
+</div>
+
+<div class="pcStatus">
+ONLINE
+</div>
+
+`;
+
+                grid.appendChild(pc);
+            }
+
+            /*
+            Draw cables after browser calculates PC positions.
+            */
+
+            requestAnimationFrame(() => {
+
+                drawCables();
+
+            });
+
+        }
+
+
+        /* =========================================================
+        DRAW LAN CABLES
+        ========================================================= */
+
+        function drawCables() {
+
+            const svg = document.getElementById("cableLayer");
+            const canvas = document.getElementById("networkCanvas");
+            const grid = document.getElementById("pcGrid");
+
+            if (!svg || !canvas || !grid) return;
+
+            /*
+            Remove old cable lines except SVG defs.
+            */
+
+            svg.querySelectorAll(".cableGroup").forEach(e => e.remove());
+
+            const pcs = [...document.querySelectorAll(".pc")];
+
+            if (!pcs.length) return;
+
+            /*
+            Detect actual number of columns.
+            */
+
+            const columns =
+                getComputedStyle(grid)
+                    .gridTemplateColumns
+                    .split(" ")
+                    .length;
+
+            function center(pc) {
+
+                const r = pc.getBoundingClientRect();
+                const c = canvas.getBoundingClientRect();
+
+                return {
+                    x: r.left + r.width / 2 - c.left,
+                    y: r.top + r.height / 2 - c.top
+                };
+            }
+
+            function addCable(a, b) {
+
+                const p1 = center(pcs[a]);
+                const p2 = center(pcs[b]);
+
+                const group =
+                    document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "g"
+                    );
+
+                group.classList.add("cableGroup");
+
+                const line =
+                    document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "line"
+                    );
+
+                line.setAttribute("x1", p1.x);
+                line.setAttribute("y1", p1.y);
+
+                line.setAttribute("x2", p2.x);
+                line.setAttribute("y2", p2.y);
+
+                line.classList.add("cable");
+
+                line.dataset.from = a;
+                line.dataset.to = b;
+
+                const glow =
+                    document.createElementNS(
+                        "http://www.w3.org/2000/svg",
+                        "line"
+                    );
+
+                glow.setAttribute("x1", p1.x);
+                glow.setAttribute("y1", p1.y);
+
+                glow.setAttribute("x2", p2.x);
+                glow.setAttribute("y2", p2.y);
+
+                glow.classList.add("cableGlow");
+
+                group.appendChild(glow);
+                group.appendChild(line);
+
+                svg.appendChild(group);
+            }
+
+            /*
+            Horizontal + vertical LAN connections.
+            */
+
+            for (let i = 0; i < TOTAL_PCS; i++) {
+
+                if ((i % columns) !== columns - 1) {
+
+                    if (i + 1 < TOTAL_PCS) {
+
+                        addCable(i, i + 1);
+
+                    }
+                }
+
+                if (i + columns < TOTAL_PCS) {
+
+                    addCable(i, i + columns);
+
+                }
+            }
+        }
+
+
+        /* =========================================================
+        GET CABLE GRAPH
+        ========================================================= */
+
+        function getNeighbors(id) {
+
+            const grid =
+                document.getElementById("pcGrid");
+
+            const columns =
+                getComputedStyle(grid)
+                    .gridTemplateColumns
+                    .split(" ")
+                    .length;
+
+            const row = Math.floor(id / columns);
+            const col = id % columns;
+
+            const result = [];
+
+            if (col > 0)
+                result.push(id - 1);
+
+            if (col < columns - 1 && id + 1 < TOTAL_PCS)
+                result.push(id + 1);
+
+            if (row > 0)
+                result.push(id - columns);
+
+            if (id + columns < TOTAL_PCS)
+                result.push(id + columns);
+
+            return result;
+        }
+
+
+        /* =========================================================
+        FIND CABLE PATH
+        ========================================================= */
+
+        function findPath(start, end) {
+
+            if (start === end)
+                return [start];
+
+            const queue = [[start]];
+            const visited = new Set([start]);
+
+            while (queue.length) {
+
+                const path = queue.shift();
+
+                const last =
+                    path[path.length - 1];
+
+                for (const next of getNeighbors(last)) {
+
+                    if (visited.has(next))
+                        continue;
+
+                    const newPath =
+                        [...path, next];
+
+                    if (next === end)
+                        return newPath;
+
+                    visited.add(next);
+
+                    queue.push(newPath);
+                }
+            }
+
+            return [start, end];
+        }
+
+
+        /* =========================================================
+        ACTIVE CABLE
+        ========================================================= */
+
+        function setActiveCable(a, b, active) {
+
+            const lines =
+                document.querySelectorAll(".cable");
+
+            lines.forEach(line => {
+
+                const x = Number(line.dataset.from);
+                const y = Number(line.dataset.to);
+
+                if (
+                    (x === a && y === b) ||
+                    (x === b && y === a)
+                ) {
+
+                    if (active)
+                        line.classList.add("active");
+                    else
+                        line.classList.remove("active");
+
+                }
+
+            });
+        }
+
+
+        /* =========================================================
+        ANIMATE NETWORK PACKET
+        ========================================================= */
+
+        async function animatePacket(path, token) {
+
+            for (let i = 0; i < path.length - 1; i++) {
+
+                if (token !== simulationToken)
+                    return false;
+
+                const from = path[i];
+                const to = path[i + 1];
+
+                const pc1 =
+                    document.getElementById(`pc-${from}`);
+
+                const pc2 =
+                    document.getElementById(`pc-${to}`);
+
+                if (!pc1 || !pc2)
+                    return false;
+
+                const r1 =
+                    pc1.getBoundingClientRect();
+
+                const r2 =
+                    pc2.getBoundingClientRect();
+
+                const x1 =
+                    r1.left + r1.width / 2;
+
+                const y1 =
+                    r1.top + r1.height / 2;
+
+                const x2 =
+                    r2.left + r2.width / 2;
+
+                const y2 =
+                    r2.top + r2.height / 2;
+
+                const packet =
+                    document.createElement("div");
+
+                packet.className = "networkPacket";
+
+                packet.style.left = x1 + "px";
+                packet.style.top = y1 + "px";
+
+                document.body.appendChild(packet);
+
+                setActiveCable(from, to, true);
+
+                const dx = x2 - x1;
+                const dy = y2 - y1;
+
+                const animation =
+                    packet.animate(
+                        [
+                            {
+                                transform:
+                                    "translate(-50%,-50%) scale(.7)"
+                            },
+                            {
+                                transform:
+                                    `translate(
+calc(-50% + ${dx}px),
+calc(-50% + ${dy}px)
+) scale(1.3)`
+                            }
+                        ],
+                        {
+                            duration: 550,
+                            easing: "ease-in-out",
+                            fill: "forwards"
+                        }
+                    );
+
+                await animation.finished;
+
+                setActiveCable(from, to, false);
+
+                packet.remove();
+
+                await wait(100);
+            }
+
+            return token === simulationToken;
+        }
+
+
+        /* =========================================================
+        WAIT
+        ========================================================= */
+
+        function wait(ms) {
+
+            return new Promise(resolve => {
+
+                const id =
+                    setTimeout(resolve, ms);
+
+                timers.push(id);
+
+            });
+        }
+
+
+        /* =========================================================
+        AUTOMATIC SIMULATION
+        ========================================================= */
+
+        function startAutomaticSimulation() {
+
+            if (simulationStarted)
+                return;
+
+            simulationStarted = true;
+
+            document.getElementById("statStatus")
+                .textContent = "RUNNING";
+
+            if (currentThreat === "Virus") {
+
+                startVirus();
+
+            }
+
+            else if (currentThreat === "Worm") {
+
+                startWorm();
+
+            }
+
+            else if (currentThreat === "Trojan") {
+
+                startTrojan();
+
+            }
+        }
+
+
+        /* =========================================================
+        RANDOM PC
+        ========================================================= */
+
+        function randomPC() {
+
+            return Math.floor(
+                Math.random() * TOTAL_PCS
+            );
+
+        }
+
+
+        /* =========================================================
+        RANDOM ARRAY
+        ========================================================= */
+
+        function shuffle(array) {
+
+            for (let i = array.length - 1; i > 0; i--) {
+
+                const j =
+                    Math.floor(Math.random() * (i + 1));
+
+                [array[i], array[j]] =
+                    [array[j], array[i]];
+
+            }
+
+            return array;
+        }
+
+
+        /* =========================================================
+        INFECT PC
+        ========================================================= */
+
+        function infectPC(id) {
+
+            if (infected.has(id))
+                return;
+
+            infected.add(id);
+
+            const pc =
+                document.getElementById(`pc-${id}`);
+
+            if (!pc) return;
+
+            pc.classList.add("infected");
+
+            const logo =
+                pc.querySelector(".pcLogo");
+
+            const status =
+                pc.querySelector(".pcStatus");
+
+            if (logo)
+                logo.textContent = "🦠";
+
+            if (status)
+                status.textContent = "INFECTED";
+
+            updateStats();
+
+        }
+
+
+        /* =========================================================
+        SET HOST
+        ========================================================= */
+
+        function setHost(id) {
+
+            hostId = id;
+
+            const pc =
+                document.getElementById(`pc-${id}`);
+
+            if (!pc) return;
+
+            pc.classList.add("host");
+
+            const logo =
+                pc.querySelector(".pcLogo");
+
+            const status =
+                pc.querySelector(".pcStatus");
+
+            if (logo)
+                logo.textContent = "🖥️";
+
+            if (status)
+                status.textContent = "HOST";
+
+        }
+
+
+        /* =========================================================
+        VIRUS
+        ========================================================= */
+
+        async function startVirus() {
+
+            const token = simulationToken;
+
+            hostId = randomPC();
+
+            setHost(hostId);
+
+            addLog(
+                `🟡 Random HOST selected: PC-${hostId + 1}`,
+                "warn"
+            );
+
+            addLog(
+                "🦠 Virus propagation started automatically.",
+                "danger"
+            );
+
+            document.getElementById("networkHint")
+                .textContent =
+                `HOST = PC-${hostId + 1} • spreading to 11 PCs`;
+
+            /*
+            All PCs except host.
+            */
+
+            let targets = [];
+
+            for (let i = 0; i < TOTAL_PCS; i++) {
+
+                if (i !== hostId)
+                    targets.push(i);
+
+            }
+
+            /*
+            Random infection order.
+            */
+
+            shuffle(targets);
+
+            let from = hostId;
+
+            for (const target of targets) {
+
+                if (token !== simulationToken)
+                    return;
+
+                const path =
+                    findPath(from, target);
+
+                addLog(
+                    `🦠 Virus moving: PC-${from + 1} → PC-${target + 1}`,
+                    "danger"
+                );
+
+                await animatePacket(path, token);
+
+                if (token !== simulationToken)
+                    return;
+
+                infectPC(target);
+
+                addLog(
+                    `✖ PC-${target + 1} infected`,
+                    "danger"
+                );
+
+                from = target;
+
+                await wait(220);
+            }
+
+            if (token !== simulationToken)
+                return;
+
+            addLog(
+                "✓ Virus simulation completed: 1 HOST + 11 INFECTED.",
+                "good"
+            );
+
+            document.getElementById("statStatus")
+                .textContent = "COMPLETE";
+
+            document.getElementById("networkHint")
+                .textContent =
+                "✓ Virus spread completed";
+
+        }
+
+
+        /* =========================================================
+        WORM
+        ========================================================= */
+
+        async function startWorm() {
+
+            const token = simulationToken;
+
+            const start = randomPC();
+
+            addLog(
+                `🟢 Random worm starting PC: PC-${start + 1}`,
+                "good"
+            );
+
+            document.getElementById("networkHint")
+                .textContent =
+                "LAN CABLE ACTIVE • RANDOM SPREAD";
+
+            /*
+            First PC gets infected.
+            */
+
+            infectPC(start);
+
+            addLog(
+                `🪱 PC-${start + 1} infected — worm entered LAN`,
+                "danger"
+            );
+
+            let current = start;
+
+            /*
+            Randomly infect all remaining PCs.
+            */
+
+            while (infected.size < TOTAL_PCS) {
+
+                if (token !== simulationToken)
+                    return;
+
+                const available = [];
+
+                for (let i = 0; i < TOTAL_PCS; i++) {
+
+                    if (!infected.has(i))
+                        available.push(i);
+
+                }
+
+                /*
+                Random target.
+                */
+
+                const target =
+                    available[
+                    Math.floor(
+                        Math.random() * available.length
+                    )
+                    ];
+
+                const path =
+                    findPath(current, target);
+
+                addLog(
+                    `🪱 Worm route: PC-${current + 1} → PC-${target + 1}`,
+                    "danger"
+                );
+
+                const completed =
+                    await animatePacket(path, token);
+
+                if (!completed)
+                    return;
+
+                infectPC(target);
+
+                addLog(
+                    `⚡ Network infection → PC-${target + 1}`,
+                    "danger"
+                );
+
+                current = target;
+
+                await wait(180);
+            }
+
+            if (token !== simulationToken)
+                return;
+
+            addLog(
+                "✓ Worm reached all 12 PCs through simulated LAN cables.",
+                "good"
+            );
+
+            document.getElementById("statStatus")
+                .textContent = "COMPLETE";
+
+            document.getElementById("networkHint")
+                .textContent =
+                "✓ ALL 12 PCs INFECTED • LAN SPREAD COMPLETE";
+
+        }
+
+
+        /* =========================================================
+        TROJAN
+        ========================================================= */
+
+        async function startTrojan() {
+
+            const token = simulationToken;
+
+            targetId = randomPC();
+
+            const pc =
+                document.getElementById(`pc-${targetId}`);
+
+            if (pc)
+                pc.classList.add("target");
+
+            document.getElementById("networkHint")
+                .textContent =
+                `RANDOM TARGET = PC-${targetId + 1}`;
+
+            addLog(
+                `🟣 Trojan selected random target: PC-${targetId + 1}`,
+                "warn"
+            );
+
+            await wait(600);
+
+            if (token !== simulationToken)
+                return;
+
+            /*
+            Fake application window.
+            */
+
+            const fake =
+                document.createElement("div");
+
+            fake.className = "fakeApp";
+
+            fake.innerHTML = `
+
+<div class="fakeWindow">
+
+<div class="fakeIcon">📦</div>
+
+<h2>System Utility</h2>
+
+<p>
+Installing application...
+</p>
+
+<div class="progressBar">
+<div class="progress"></div>
+</div>
+
+</div>
+
+`;
+
+            document.body.appendChild(fake);
+
+            addLog(
+                `⚠ Fake application execution started on PC-${targetId + 1}`,
+                "warn"
+            );
+
+            await wait(1700);
+
+            if (token !== simulationToken)
+                return;
+
+            fake.remove();
+
+            if (pc)
+                pc.classList.remove("target");
+
+            infectPC(targetId);
+
+            addLog(
+                `✖ Trojan infected ONLY PC-${targetId + 1}`,
+                "danger"
+            );
+
+            await wait(400);
+
+            if (token !== simulationToken)
+                return;
+
+            addLog(
+                "✓ Trojan simulation completed: exactly 1 PC infected.",
+                "good"
+            );
+
+            document.getElementById("statStatus")
+                .textContent = "COMPLETE";
+
+            document.getElementById("networkHint")
+                .textContent =
+                `✓ ONLY PC-${targetId + 1} INFECTED`;
+
+        }
+
+
+        /* =========================================================
+        UPDATE STATS
+        ========================================================= */
+
+        function updateStats() {
+
+            document.getElementById("statInfected")
+                .textContent = infected.size;
+
+            document.getElementById("statEvents")
+                .textContent = events;
+
+        }
+
+
+        /* =========================================================
+        LOG
+        ========================================================= */
+
+        function addLog(message, type = "") {
+
+            events++;
+
+            const log =
+                document.getElementById("activityLog");
+
+            const line =
+                document.createElement("div");
+
+            line.className =
+                "logLine " + type;
+
+            const time =
+                new Date().toLocaleTimeString();
+
+            line.textContent =
+                `[${time}] ${message}`;
+
+            log.appendChild(line);
+
+            log.scrollTop =
+                log.scrollHeight;
+
+            updateStats();
+
+        }
+
+
+        /* =========================================================
+        INFORMATION
+        ========================================================= */
+
+        function updateInformation() {
+
+            const data =
+                threatData[currentThreat];
+
+            if (!data)
+                return;
+
+            document.getElementById("infoThreat")
+                .textContent =
+                data.properties;
+
+            document.getElementById("infoProperties")
+                .textContent =
+                data.properties;
+
+            document.getElementById("infoWorking")
+                .textContent =
+                data.working;
+
+            document.getElementById("infoSolution")
+                .textContent =
+                data.solution;
+
+            document.getElementById("infoDetails")
+                .textContent =
+                data.details;
+
+            document.getElementById("infoSecurity")
+                .textContent =
+                data.security;
+
+        }
+
+
+        /* =========================================================
+        RESTART
+        ========================================================= */
+
+        function restart() {
+
+            simulationToken++;
+
+            /*
+            Clear timers
+            */
+
+            timers.forEach(id => {
+                clearTimeout(id);
+            });
+
+            timers = [];
+
+            /*
+            Remove fake app
+            */
+
+            document.querySelectorAll(".fakeApp")
+                .forEach(e => e.remove());
+
+            /*
+            Remove packets
+            */
+
+            document.querySelectorAll(".networkPacket")
+                .forEach(e => e.remove());
+
+            /*
+            Reset variables
+            */
+
+            infected.clear();
+
+            hostId = null;
+            targetId = null;
+
+            events = 0;
+
+            simulationStarted = false;
+
+            /*
+            Reset UI
+            */
+
+            document.getElementById("statInfected")
+                .textContent = "0";
+
+            document.getElementById("statEvents")
+                .textContent = "0";
+
+            document.getElementById("statStatus")
+                .textContent = "READY";
+
+            document.getElementById("activityLog")
+                .innerHTML = "";
+
+            document.getElementById("networkHint")
+                .textContent =
+                "Restarting with random PC...";
+
+            /*
+            Recreate PCs.
+            */
+
+            createPCs();
+
+            const token = simulationToken;
+
+            setTimeout(() => {
+
+                if (token !== simulationToken)
+                    return;
+
+                startAutomaticSimulation();
+
+            }, 500);
+
+        }
+
+
+        /* =========================================================
+        BACK HOME
+        ========================================================= */
+
+        function backHome() {
+
+            simulationToken++;
+
+            timers.forEach(id => {
+                clearTimeout(id);
+            });
+
+            timers = [];
+
+            document.querySelectorAll(".fakeApp")
+                .forEach(e => e.remove());
+
+            document.querySelectorAll(".networkPacket")
+                .forEach(e => e.remove());
+
+            infected.clear();
+
+            hostId = null;
+            targetId = null;
+            events = 0;
+            simulationStarted = false;
+
+            document.getElementById("simulatorPage")
+                .style.display = "none";
+
+            document.getElementById("homePage")
+                .style.display = "flex";
+
+        }
+
+
+        /* =========================================================
+        REDRAW CABLES ON RESIZE
+        ========================================================= */
+
+        let resizeTimer;
+
+        window.addEventListener("resize", () => {
+
+            clearTimeout(resizeTimer);
+
+            resizeTimer =
+                setTimeout(() => {
+
+                    drawCables();
+
+                }, 150);
+
+        });
+
+
+        /* =========================================================
+        START
+        ========================================================= */
+
+    </script>
+
+</body>
+
+</html>
